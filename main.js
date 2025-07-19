@@ -1,3 +1,4 @@
+import { cp } from "fs"
 import { readFile, stat } from "fs/promises"
 
 /**
@@ -33,6 +34,52 @@ function alloc(size) {
     return Buffer.alloc(size)
 }
 
+class SystemBus {}
+
+class CPU {
+    #registers
+    /** @type {SystemBus | null} */
+    #bus
+    #kPanic
+    
+    constructor() {
+        this.#registers = {
+            IP: 0x0000
+        }
+        this.#bus = null
+
+        /**
+         * 
+         * @param {string} msg 
+         */
+        this.#kPanic = (msg) => {
+            const e = new Error()
+            e.name = 'KernelPanic'
+            e.message = msg
+            throw e
+        }
+    }
+
+    /**
+     * 
+     * @param {SystemBus} bus 
+     */
+    connectBus(bus) {
+        this.#bus = bus
+    }
+
+    run() {
+        if (this.#bus === null) {
+            this.#kPanic('System bus not connected!')
+        }
+    }
+
+    dumpRegisters() {
+        console.dir(this.#registers)
+    }
+    
+}
+
 async function main() {
     process.exitCode = -1
 
@@ -65,6 +112,12 @@ async function main() {
     console.log('Copying file to memory...')
 
     tmp.copy(fileMemory)
+
+    const cpu = new CPU()
+
+    cpu.dumpRegisters()
+
+    cpu.run()
 
     process.exitCode = 0
 
