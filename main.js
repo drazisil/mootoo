@@ -45,16 +45,21 @@ class SystemBus {
     /**
      * 
      * @param {Buffer} memory 
-     */
-    connectMemory(memory) {
-        this.#memory = memory
+    */
+   connectMemory(memory) {
+       this.#memory = memory
     }
-
+    
+    /**
+     * 
+     * @param {number} address 
+     * @returns {Error | number}
+     */
     read(address) {
         if (this.#memory === null || this.#memory[address] === undefined) {
-            return null
+            return new Error(`Error reading address at ${address}`)
         }
-        return this.#memory.readUInt8(address) ?? null
+        return this.#memory.readUInt8(address)
     }
 }
 
@@ -87,8 +92,8 @@ class CPU {
 
             const byte = this.#bus.read(this.#registers.IP)
 
-            if (byte === null) {
-                this.#kPanic(`Byte at IP:${this.#registers.IP} was ${byte}`)
+            if (byte instanceof Error) {
+                this.#kPanic(`Error fetching byte at ${this.#registers.IP}}`, byte)
             }
 
             return byte
@@ -97,11 +102,15 @@ class CPU {
         /**
          * 
          * @param {string} msg 
+         * @param {Error} [cause]
         */
-        this.#kPanic = (msg) => {
+        this.#kPanic = (msg, cause = undefined) => {
             const e = new Error()
             e.name = 'KernelPanic'
             e.message = msg
+            if (typeof cause !== "undefined") {
+                e.cause = cause
+            }
             throw e
         }
     }
@@ -130,6 +139,12 @@ class CPU {
 
     dumpRegisters() {
         console.dir(this.#registers)
+    }
+
+    dumpState() {
+        return {
+            bus: this.#bus === null ? "NOT connected" : "Connected"
+        }
     }
 
 }
