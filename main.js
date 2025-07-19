@@ -72,6 +72,8 @@ class CPU {
         if (this.#bus === null) {
             this.#kPanic('System bus not connected!')
         }
+
+        this.#kPanic('System STOP')
     }
 
     dumpRegisters() {
@@ -113,7 +115,10 @@ async function main() {
 
     tmp.copy(fileMemory)
 
+    const bus = new SystemBus()
+
     const cpu = new CPU()
+    cpu.connectBus(bus)
 
     cpu.dumpRegisters()
 
