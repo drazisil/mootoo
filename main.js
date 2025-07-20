@@ -1,68 +1,10 @@
-import { cp } from "fs"
 import { readFile, stat } from "fs/promises"
+import { alignOnK, alloc, getArgs } from "./src/util.js"
+import { SystemBus } from "./src/SystemBus.js"
 
 /**
  * 
- * @returns {string[]}
  */
-function getArgs() {
-    const rawArgs = process.argv
-
-    if (rawArgs.length < 3) {
-        return []
-    }
-    return rawArgs.slice(2)
-}
-
-/**
- * 
- * @param {number} x 
- * @returns {number}
- */
-function alignOnK(x) {
-    const r = x % 1024
-
-    return r > 0 ? x + 1024 - r : x
-}
-
-/**
- * 
- * @param {number} size 
- * @returns 
- */
-function alloc(size) {
-    return Buffer.alloc(size)
-}
-
-class SystemBus {
-    /** @type {Buffer | null} */
-    #memory
-
-    constructor() {
-        this.#memory = null
-    }
-
-    /**
-     * 
-     * @param {Buffer} memory 
-    */
-   connectMemory(memory) {
-       this.#memory = memory
-    }
-    
-    /**
-     * 
-     * @param {number} address 
-     * @returns {Error | number}
-     */
-    read(address) {
-        if (this.#memory === null || this.#memory[address] === undefined) {
-            return new Error(`Error reading address at ${address}`)
-        }
-        return this.#memory.readUInt8(address)
-    }
-}
-
 class CPU {
     #registers
     /** @type {SystemBus | null} */
@@ -184,14 +126,21 @@ async function main() {
 
     const bus = new SystemBus()
 
+    bus.connectMemory(fileMemory)
+
     const cpu = new CPU()
     cpu.connectBus(bus)
 
     cpu.dumpRegisters()
 
-    cpu.run()
+    try {
+        cpu.run()
+        process.exitCode = 0
+    } catch (e) {
+        console.log(e)
+    }
 
-    process.exitCode = 0
+
 
 }
 
